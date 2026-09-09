@@ -137,7 +137,7 @@ export interface XyChartDataForCsv {
 
 interface ChartCsvRow {
     timestamp: string | number | bigint;
-    ip: string;
+    category: string;
     value: string | number;
 }
 
@@ -201,21 +201,21 @@ function compareTimestamps(a: string | number | bigint, b: string | number | big
 }
 
 function compareChartCsvRows(a: ChartCsvRow, b: ChartCsvRow): number {
-    const ipCmp = a.ip.localeCompare(b.ip, undefined, { numeric: true });
-    if (ipCmp !== 0) {
-        return ipCmp;
+    const categoryCmp = a.category.localeCompare(b.category, undefined, { numeric: true });
+    if (categoryCmp !== 0) {
+        return categoryCmp;
     }
     return compareTimestamps(a.timestamp, b.timestamp);
 }
 
 /**
  * Build a long-format CSV from chart xyData:
- * Timestamp, IPs, Value
- * (one row per series sample; series name used as IPs column).
- * Rows are intentionally grouped by IPs, then sorted by timestamp within each IP.
+ * Timestamp, Category, Value
+ * (one row per series sample; series name used as category column).
+ * Rows are intentionally grouped by category, then sorted by timestamp within each category.
  */
 export function xyChartDataToCsv(xyData?: XyChartDataForCsv): string {
-    const header = ['Timestamp', 'IPs', 'Value'].map(csvEscape).join(',');
+    const header = ['Timestamp', 'Category', 'Value'].map(csvEscape).join(',');
     const labels = xyData?.labels ?? [];
     const datasets = xyData?.datasets ?? [];
     if (!datasets.length) {
@@ -224,7 +224,7 @@ export function xyChartDataToCsv(xyData?: XyChartDataForCsv): string {
 
     const rows: ChartCsvRow[] = [];
     datasets.forEach(dataset => {
-        const ip = dataset.label ?? '';
+        const category = dataset.label ?? '';
         const data = dataset.data ?? [];
         data.forEach((point, index) => {
             let timestamp: string | number | bigint = '';
@@ -236,7 +236,7 @@ export function xyChartDataToCsv(xyData?: XyChartDataForCsv): string {
                 timestamp = labels[index] ?? '';
                 value = point as number;
             }
-            rows.push({ timestamp, ip, value });
+            rows.push({ timestamp, category, value });
         });
     });
 
@@ -245,7 +245,7 @@ export function xyChartDataToCsv(xyData?: XyChartDataForCsv): string {
     }
 
     rows.sort(compareChartCsvRows);
-    return header + '\n' + rows.map(r => [r.timestamp, r.ip, r.value].map(csvEscape).join(',')).join('\n');
+    return header + '\n' + rows.map(r => [r.timestamp, r.category, r.value].map(csvEscape).join(',')).join('\n');
 }
 
 /** Abbreviate large magnitudes: 1.2K, 3.4M, 5.6B, 7.8G */
